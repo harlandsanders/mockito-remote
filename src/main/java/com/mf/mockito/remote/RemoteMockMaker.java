@@ -1,11 +1,11 @@
 package com.mf.mockito.remote;
 
-import org.mockito.internal.InternalMockHandler;
 import org.mockito.internal.creation.CglibMockMaker;
 import org.mockito.invocation.MockHandler;
 import org.mockito.mock.MockCreationSettings;
+import org.mockito.plugins.MockMaker;
 
-public class RemoteMockMaker implements org.mockito.plugins.MockMaker {
+public class RemoteMockMaker implements MockMaker {
     private final CglibMockMaker mockMaker;
 
     public RemoteMockMaker() {
@@ -15,16 +15,23 @@ public class RemoteMockMaker implements org.mockito.plugins.MockMaker {
     @Override
     @SuppressWarnings("unchecked")
     public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
-        return mockMaker.createMock(settings, new RemoteMockHandler<>((InternalMockHandler<T>) handler));
+        return mockMaker.createMock(settings, new RemoteMockHandler<>(handler));
     }
 
     @Override
-    public MockHandler getHandler(Object mock) {
-        return mockMaker.getHandler(mock);
+    public RemoteMockHandler getHandler(Object mock) {
+        MockHandler handler = mockMaker.getHandler(mock);
+        if (handler instanceof RemoteMockHandler) {
+            return (RemoteMockHandler) handler;
+        }
+
+        return handler == null ? null : new RemoteMockHandler(handler);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void resetMock(Object mock, MockHandler newHandler, MockCreationSettings settings) {
-        mockMaker.resetMock(mock, newHandler, settings);
+        RemoteMockitoClient oldClient = getHandler(mock).getClient();
+        mockMaker.resetMock(mock, new RemoteMockHandler(newHandler, oldClient), settings);
     }
 }

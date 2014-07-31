@@ -14,25 +14,23 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static java.net.HttpURLConnection.*;
+import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableSet;
+import static org.mockito.Mockito.reset;
 
 public class RemoteMockitoServer implements HttpHandler {
-    private static final int OK = 200;
-    private static final int NOT_FOUND = 404;
-    private static final int METHOD_NOT_ALLOWED = 405;
-
     private final int port;
     private final Set<Object> mocks;
     private HttpServer server;
 
-    public RemoteMockitoServer(int port, Collection<Object> mocks) {
+    public RemoteMockitoServer(int port, Object... mocks) {
         this.port = port;
-        this.mocks = unmodifiableSet(new HashSet<>(mocks));
+        this.mocks = unmodifiableSet(new HashSet<>(asList(mocks)));
     }
 
     public void start() throws IOException {
@@ -50,6 +48,9 @@ public class RemoteMockitoServer implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         try {
             switch (exchange.getRequestMethod()) {
+                case "DELETE":
+                    resetInvocations(exchange);
+                    break;
                 case "GET":
                     sendInvocations(exchange);
                     break;
@@ -57,33 +58,39 @@ public class RemoteMockitoServer implements HttpHandler {
                     receiveStubbedInvocations(exchange);
                     break;
                 default:
-                    exchange.sendResponseHeaders(METHOD_NOT_ALLOWED, 0);
+                    exchange.sendResponseHeaders(HTTP_BAD_METHOD, 0);
             }
-        } catch (ClassNotFoundException | MockNotFoundException exception) {
-            exchange.sendResponseHeaders(NOT_FOUND, 0);
+        } catch (ClassNotFoundException | NotARemoteMockException exception) {
+            exchange.sendResponseHeaders(HTTP_NOT_FOUND, 0);
         } finally {
             exchange.getResponseBody().close();
         }
     }
 
-    private void sendInvocations(HttpExchange exchange) throws IOException, ClassNotFoundException, MockNotFoundException {
+    private void resetInvocations(HttpExchange exchange) throws IOException, ClassNotFoundException, NotARemoteMockException {
+        Object mock = findMockFor(exchange.getRequestURI().getPath());
+        reset(mock);
+        exchange.sendResponseHeaders(HTTP_OK, -1);
+    }
+
+    private void sendInvocations(HttpExchange exchange) throws IOException, ClassNotFoundException, NotARemoteMockException {
         Object mock = findMockFor(exchange.getRequestURI().getPath());
         byte[] stubbings = serialiseInvocations(mock);
 
-        exchange.sendResponseHeaders(OK, stubbings.length);
+        exchange.sendResponseHeaders(HTTP_OK, stubbings.length);
         try (OutputStream out = exchange.getResponseBody()) {
             out.write(stubbings);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void receiveStubbedInvocations(HttpExchange exchange) throws IOException, ClassNotFoundException, MockNotFoundException {
+    private void receiveStubbedInvocations(HttpExchange exchange) throws IOException, ClassNotFoundException, NotARemoteMockException {
         Object mock = findMockFor(exchange.getRequestURI().getPath());
 
         try (Reader in = new InputStreamReader(exchange.getRequestBody())) {
             List<StubbedInvocationMatcher> stubbings = (List<StubbedInvocationMatcher>) new XStream().fromXML(in);
             setStubbedInvocationsOnMock(mock, stubbings);
-            exchange.sendResponseHeaders(OK, 0);
+            exchange.sendResponseHeaders(HTTP_OK, 0);
         }
     }
 
@@ -96,7 +103,7 @@ public class RemoteMockitoServer implements HttpHandler {
         }
     }
 
-    private Object findMockFor(String path) throws MockNotFoundException, ClassNotFoundException {
+    private Object findMockFor(String path) throws NotARemoteMockException, ClassNotFoundException {
         Class<?> clazz = Class.forName(path.substring(path.lastIndexOf("/") + 1));
         for (Object mock : mocks) {
             if (clazz.isAssignableFrom(mock.getClass())) {
@@ -104,7 +111,7 @@ public class RemoteMockitoServer implements HttpHandler {
             }
         }
 
-        throw new MockNotFoundException();
+        throw new NotARemoteMockException();
     }
 
     private byte[] serialiseInvocations(Object mock) {
