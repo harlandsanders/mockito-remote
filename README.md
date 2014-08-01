@@ -8,7 +8,7 @@ Stub and verify invocations for Mockito mocks in a remote application.
 * On the test side use the static `given()` and `verify()` methods from `BDDRemoteMockito` in the same way you would with regular Mockito.
 * Any mocks registered with the `RemoteMockitoClient` and `RemoteMockitoServer` will be automatically synchronised.
 
-## Manually look at mock invocations on RemoteMockitoServer
+## HTTP access to RemoteMockitoServer
 `RemoteMockitoServer` has a REST like interface that can be accessed by a web browser or curl pointed to `http://server:port/com.fully.qualified.ClassName`.
 
 You can see the current list of invocations on a mock using `GET`, upload some new stubbings using `POST`, and reset the remote invocations using `DELETE`.
