@@ -24,7 +24,7 @@ public class RemoteMockitoIT {
     @Mock
     Bar bar;
 
-    RemoteMockitoClient fooServer = new RemoteMockitoClient("127.0.0.1", 8081);
+    RemoteMockitoClient fooServer = new RemoteMockitoClient("localhost", 8081);
 
     @Before
     public void remoteControl() {
@@ -35,7 +35,7 @@ public class RemoteMockitoIT {
     public void shouldBeAbleToStubAndVerifyOnRemoteApplication() throws Exception {
         given(bar.bar()).willReturn("mock response for bar");
 
-        new URL("http://127.0.0.1:8080/someRemoteApplication/endpoint").getContent();
+        new URL("http://localhost:8080/someRemoteApplication/endpoint").getContent();
 
         verify(foo).foo("mock response for bar");
     }
@@ -44,6 +44,6 @@ public class RemoteMockitoIT {
     public void foo() throws Exception {
         willThrow(IllegalArgumentException.class).given(foo).foo(anyString());
 
-        new URL("http://127.0.0.1:8080/someRemoteApplication/endpoint").getContent();
+        new URL("http://localhost:8080/someRemoteApplication/endpoint").getContent();
     }
 }

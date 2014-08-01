@@ -150,13 +150,16 @@ public class RemoteMockitoClient {
 
     private void setInvocationsOnMock(Object mock, List<Invocation> remoteInvocations) {
         RemoteMockHandler handler = REMOTE_MOCK_MAKER.getHandler(mock);
-        for (Invocation invocation : remoteInvocations) {
-            ((SerialisableInvocation) invocation).setMock(mock);
+        List<Invocation> existing = handler.getInvocationContainer().getInvocations();
 
-            try {
-                handler.handle(invocation);
-            } catch (Throwable throwable) {
-                // Ignore replayed stub invocations
+        for (Invocation invocation : remoteInvocations) {
+            if (existing.isEmpty() || invocation.getSequenceNumber() > existing.get(existing.size() - 1).getSequenceNumber()) {
+                ((SerialisableInvocation) invocation).setMock(mock);
+                try {
+                    handler.handle(invocation);
+                } catch (Throwable throwable) {
+                    // Ignore replayed stub invocations
+                }
             }
         }
     }

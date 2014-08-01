@@ -11,7 +11,7 @@ import java.io.IOException;
 
 import static org.mockito.Mockito.mock;
 
-@WebServlet("/someRemoteApplication/endpoint")
+@WebServlet(value = "/someRemoteApplication/endpoint", loadOnStartup = 0)
 public class SomeRemoteApp extends HttpServlet {
     private Foo foo = mock(Foo.class);
     private Bar bar = mock(Bar.class);
@@ -24,5 +24,6 @@ public class SomeRemoteApp extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         foo.foo(bar.bar());
+        response.setContentType("text/plain");
     }
 }

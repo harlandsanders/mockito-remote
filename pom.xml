@@ -34,6 +34,9 @@
                 <version>9.2.2.v20140723</version>
                 <configuration>
                     <useTestClasspath>true</useTestClasspath>
+                    <stopKey>foo</stopKey>
+                    <stopPort>9999</stopPort>
+                    <daemon>true</daemon>
                 </configuration>
                 <executions>
                     <execution>
@@ -42,10 +45,6 @@
                         <goals>
                             <goal>start</goal>
                         </goals>
-                        <configuration>
-                            <scanIntervalSeconds>0</scanIntervalSeconds>
-                            <daemon>true</daemon>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>stop-jetty</id>
