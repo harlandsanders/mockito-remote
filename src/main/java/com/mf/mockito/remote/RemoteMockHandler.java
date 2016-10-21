@@ -1,5 +1,7 @@
 package com.mf.mockito.remote;
 
+import java.util.List;
+
 import org.mockito.internal.InternalMockHandler;
 import org.mockito.internal.stubbing.InvocationContainer;
 import org.mockito.internal.stubbing.InvocationContainerImpl;
@@ -7,11 +9,11 @@ import org.mockito.invocation.Invocation;
 import org.mockito.invocation.MockHandler;
 import org.mockito.mock.MockCreationSettings;
 import org.mockito.stubbing.Answer;
-import org.mockito.stubbing.VoidMethodStubbable;
-
-import java.util.List;
 
 class RemoteMockHandler<T> implements InternalMockHandler<T> {
+
+    private static final long serialVersionUID = -2501811136817887864L;
+
     private final InternalMockHandler<T> handler;
     private RemoteMockitoClient client;
 
@@ -29,13 +31,9 @@ class RemoteMockHandler<T> implements InternalMockHandler<T> {
     public MockCreationSettings getMockSettings() {
         return handler.getMockSettings();
     }
-
-    public VoidMethodStubbable<T> voidMethodStubbable(T mock) {
-        return handler.voidMethodStubbable(mock);
-    }
-
+    
     @Override
-    public void setAnswersForStubbing(List<Answer> answers) {
+    public void setAnswersForStubbing(List<Answer<?>> answers) {
         handler.setAnswersForStubbing(answers);
     }
 

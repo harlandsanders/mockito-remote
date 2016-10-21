@@ -1,18 +1,21 @@
 package com.mf.mockito.remote;
 
+import static org.mockito.internal.invocation.ArgumentsProcessor.argumentsToMatchers;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
 import org.mockito.internal.exceptions.VerificationAwareInvocation;
 import org.mockito.internal.reporting.PrintSettings;
 import org.mockito.invocation.Invocation;
 import org.mockito.invocation.Location;
 import org.mockito.invocation.StubInfo;
 
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-
-import static org.mockito.internal.invocation.ArgumentsProcessor.argumentsToMatchers;
-
 class SerialisableInvocation implements Invocation, VerificationAwareInvocation, Serializable {
+
+    private static final long serialVersionUID = -1551178315419083160L;
+
     private int sequenceNumber;
     private transient Object mock;
     private SerialisableMethod method;
@@ -22,6 +25,7 @@ class SerialisableInvocation implements Invocation, VerificationAwareInvocation,
     private boolean verified;
     private boolean ignoredForVerification;
     private StubInfo stubInfo;
+    private Class<?> rawReturnType;
 
     SerialisableInvocation(Invocation invocation) {
         this.sequenceNumber = invocation.getSequenceNumber();
@@ -32,6 +36,7 @@ class SerialisableInvocation implements Invocation, VerificationAwareInvocation,
         this.location = invocation.getLocation();
         this.verified = invocation.isVerified();
         this.ignoredForVerification = invocation.isIgnoredForVerification();
+        this.rawReturnType = invocation.getRawReturnType();
     }
 
     @Override
@@ -51,6 +56,16 @@ class SerialisableInvocation implements Invocation, VerificationAwareInvocation,
     @Override
     public Object[] getArguments() {
         return arguments;
+    }
+
+    @Override
+    public <T> T getArgument(int i) {
+        return (T) arguments[i];
+    }
+
+    @Override
+    public Object[] getRawArguments() {
+        return this.rawArguments;
     }
 
     @Override
@@ -89,11 +104,6 @@ class SerialisableInvocation implements Invocation, VerificationAwareInvocation,
     }
 
     @Override
-    public Object[] getRawArguments() {
-        return this.rawArguments;
-    }
-
-    @Override
     public void markVerified() {
         this.verified = true;
     }
@@ -121,5 +131,10 @@ class SerialisableInvocation implements Invocation, VerificationAwareInvocation,
     @Override
     public Object callRealMethod() throws Throwable {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Class<?> getRawReturnType() {
+        return rawReturnType;
     }
 }
