@@ -1,8 +1,7 @@
 package com.mf.mockito.remote;
 
-import com.thoughtworks.xstream.XStream;
-import org.mockito.internal.stubbing.StubbedInvocationMatcher;
-import org.mockito.invocation.Invocation;
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,12 +12,14 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import org.mockito.internal.stubbing.StubbedInvocationMatcher;
+import org.mockito.invocation.Invocation;
+
+import com.thoughtworks.xstream.XStream;
 
 public class RemoteMockitoClient {
     private static final RemoteMockMaker REMOTE_MOCK_MAKER = new RemoteMockMaker();
-    private static final String CGLIB_PROXY_SUFFIX = "$$";
+    private static final String PROXY_SUFFIX = "$";
     private static final int OK = 200;
 
     private final String host;
@@ -166,6 +167,6 @@ public class RemoteMockitoClient {
 
     private String classNameFor(Object mock) {
         return mock.getClass().getName()
-                .substring(0, mock.getClass().getName().indexOf(CGLIB_PROXY_SUFFIX));
+                .substring(0, mock.getClass().getName().indexOf(PROXY_SUFFIX));
     }
 }

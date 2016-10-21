@@ -1,5 +1,5 @@
 package com.example;
 
 public interface Bar {
-    String bar();
+    String bar(String input);
 }

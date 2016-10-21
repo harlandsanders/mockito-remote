@@ -1,15 +1,15 @@
 package com.mf.mockito.remote;
 
-import org.mockito.internal.creation.CglibMockMaker;
+import org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker;
 import org.mockito.invocation.MockHandler;
 import org.mockito.mock.MockCreationSettings;
 import org.mockito.plugins.MockMaker;
 
 public class RemoteMockMaker implements MockMaker {
-    private final CglibMockMaker mockMaker;
+    private final ByteBuddyMockMaker mockMaker;
 
     public RemoteMockMaker() {
-        this.mockMaker = new CglibMockMaker();
+        this.mockMaker = new ByteBuddyMockMaker();
     }
 
     @Override
@@ -33,5 +33,20 @@ public class RemoteMockMaker implements MockMaker {
     public void resetMock(Object mock, MockHandler newHandler, MockCreationSettings settings) {
         RemoteMockitoClient oldClient = getHandler(mock).getClient();
         mockMaker.resetMock(mock, new RemoteMockHandler(newHandler, oldClient), settings);
+    }
+
+    @Override
+    public TypeMockability isTypeMockable(Class<?> aClass) {
+        return new TypeMockability() {
+            @Override
+            public boolean mockable() {
+                return true;
+            }
+
+            @Override
+            public String nonMockableReason() {
+                return "";
+            }
+        };
     }
 }

@@ -1,12 +1,11 @@
 package com.mf.mockito.remote;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-import com.thoughtworks.xstream.XStream;
-import org.mockito.internal.stubbing.StubbedInvocationMatcher;
-import org.mockito.internal.util.MockUtil;
-import org.mockito.invocation.Invocation;
+import static java.net.HttpURLConnection.HTTP_BAD_METHOD;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableSet;
+import static org.mockito.Mockito.reset;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,10 +17,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static java.net.HttpURLConnection.*;
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableSet;
-import static org.mockito.Mockito.reset;
+import org.mockito.internal.stubbing.StubbedInvocationMatcher;
+import org.mockito.internal.util.MockUtil;
+import org.mockito.invocation.Invocation;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import com.thoughtworks.xstream.XStream;
 
 public class RemoteMockitoServer implements HttpHandler {
     private final int port;
@@ -95,10 +98,12 @@ public class RemoteMockitoServer implements HttpHandler {
     }
 
     private void setStubbedInvocationsOnMock(Object mock, List<StubbedInvocationMatcher> remoteStubbedInvocations) {
-        List<StubbedInvocationMatcher> stubbedInvocations = new MockUtil().getMockHandler(mock).getInvocationContainer().getStubbedInvocations();
+        List<StubbedInvocationMatcher> stubbedInvocations = MockUtil.getMockHandler(mock).getInvocationContainer().getStubbedInvocations();
 
         for (StubbedInvocationMatcher remoteStubbedInvocation : remoteStubbedInvocations) {
-            ((SerialisableInvocation) remoteStubbedInvocation.getInvocation()).setMock(mock);
+            Invocation invocation = remoteStubbedInvocation.getInvocation();
+            SerialisableInvocation serialisableInvocation = (SerialisableInvocation) invocation;
+            serialisableInvocation.setMock(mock);
             stubbedInvocations.add(remoteStubbedInvocation);
         }
     }
@@ -115,7 +120,7 @@ public class RemoteMockitoServer implements HttpHandler {
     }
 
     private byte[] serialiseInvocations(Object mock) {
-        List<Invocation> stubbings = new MockUtil().getMockHandler(mock).getInvocationContainer().getInvocations();
+        List<Invocation> stubbings = MockUtil.getMockHandler(mock).getInvocationContainer().getInvocations();
         return new XStream().toXML(stubbings).getBytes(Charset.forName("UTF8"));
     }
 }

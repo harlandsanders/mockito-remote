@@ -1,21 +1,24 @@
 package com.mf.mockito.remote;
 
-import com.example.Bar;
-import com.example.Foo;
-import com.mf.mockito.remote.RemoteMockitoClient;
+import static com.mf.mockito.remote.BDDRemoteMockito.given;
+import static com.mf.mockito.remote.BDDRemoteMockito.verify;
+import static com.mf.mockito.remote.BDDRemoteMockito.verifyZeroInteractions;
+import static com.mf.mockito.remote.BDDRemoteMockito.willThrow;
+import static org.mockito.Matchers.anyString;
+
+import java.io.IOException;
+import java.net.URL;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.net.URL;
+import com.example.Bar;
+import com.example.Foo;
 
-import static com.mf.mockito.remote.BDDRemoteMockito.*;
-import static org.mockito.Matchers.anyString;
-
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RemoteMockitoIT {
 
     @Mock
@@ -33,17 +36,19 @@ public class RemoteMockitoIT {
 
     @Test
     public void shouldBeAbleToStubAndVerifyOnRemoteApplication() throws Exception {
-        given(bar.bar()).willReturn("mock response for bar");
-
-        new URL("http://localhost:8080/someRemoteApplication/endpoint").getContent();
+        given(bar.bar(anyString())).willReturn("mock response for bar");
+        verifyZeroInteractions(foo);
+        new URL("http://localhost:8090/someRemoteApplication/endpoint").getContent();
 
         verify(foo).foo("mock response for bar");
+        verify(foo).foo1(500L);
     }
 
     @Test(expected = IOException.class)
-    public void foo() throws Exception {
-        willThrow(IllegalArgumentException.class).given(foo).foo(anyString());
+    public void willThrowTest() throws Exception {
+        given(bar.bar(anyString())).willReturn("fail");
+        willThrow(IllegalArgumentException.class).given(foo).foo("fail");
 
-        new URL("http://localhost:8080/someRemoteApplication/endpoint").getContent();
+        new URL("http://localhost:8090/someRemoteApplication/endpoint").getContent();
     }
 }

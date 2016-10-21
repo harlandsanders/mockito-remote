@@ -1,15 +1,16 @@
 package com.example;
 
-import com.mf.mockito.remote.RemoteMockitoServer;
+import static org.mockito.Mockito.mock;
+
+import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
-import static org.mockito.Mockito.mock;
+import com.mf.mockito.remote.RemoteMockitoServer;
 
 @WebServlet(value = "/someRemoteApplication/endpoint", loadOnStartup = 0)
 public class SomeRemoteApp extends HttpServlet {
@@ -23,7 +24,8 @@ public class SomeRemoteApp extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        foo.foo(bar.bar());
+        foo.foo(bar.bar("Some input"));
+        foo.foo1(500L);
         response.setContentType("text/plain");
     }
 }
